@@ -1,3 +1,3 @@
-# TBAL-NeurIPS-23
+# TBAL
 
 Code coming soon.
