@@ -1,0 +1,59 @@
+
+
+random_seed : 1
+
+data_conf: 
+  dataset: "unif_unit_ball"
+  train_set_size: 20000
+  dimension: 30
+  val_fraction: 0.2
+  num_classes: 2
+  test_set_size: 4000
+  random_state: 0
+  decision_boundary: 'Linear'
+
+model_conf:
+  model_name: "svm"
+  input_dimension: 30
+  num_classes: 2
+  fit_intercept: False
+  lib: "sklearn"
+
+training_conf:
+  loss_tolerance: 1e-12
+  max_epochs: 15000
+  normalize_weights: True
+  C: 2000
+  stopping_criterion: "val_err_threshold"
+  val_err_threshold: 0.3
+  ckpt_load_path: None  
+  ckpt_save_path: None #"../../ckpt/mnist_linear_passive_100.pth"
+  train_from_scratch: True
+  train_from_ckpt: False
+  ckpt_dir: "./"
+  probability: False
+
+inference_conf:
+
+train_pts_query_conf:
+  seed_train_size: 16
+  query_batch_size: 8
+  query_strategy_name: "margin_random_v2" 
+  margin_random_v2_constant: 2
+  max_num_train_pts: 2000
+
+val_pts_query_conf:
+  query_strategy_name: "random"
+  max_num_val_pts : 2000
+  
+auto_lbl_conf:
+  method_name: "selective"  # options "all" | "selective"
+  #score_type: "abs_logit"  # options "confidence" | "margin"
+  score_type: "confidence"
+  class_wise: "independent" # options "joint" | "independent" #makes sense only when using selective 
+  auto_label_err_threshold: 0.01 # only for method_name: "selective"
+  C_1: 0.25
+  ucb: 'sigma'
+
+stopping_criterion: "max_num_train_pts"
+store_model_weights_in_mem: False

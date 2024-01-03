@@ -1,0 +1,155 @@
+
+
+random_seed : 1 # random seed for numpy, torch and python.
+
+# All the details of dataset are specified here.
+# There are two types of dataset, real and synthetic.
+data_conf: 
+   
+  dataset: "unif_unit_ball" 
+  # dataset corresponding to this name is loaded at runtime.
+  # see `datasets/dataset_factory` for available options.
+
+  train_set_size: 20000
+  # Number of samples in the standard "train" dataset (pool). 
+  # Initially all the points in this set are unalabeled. 
+  # This is the set that we are trying to "auto-label".
+
+  dimension: 30
+  # For synthetic datasets need to specify the dimension of feature vectors.
+
+  val_fraction: 0.2
+  # For some real datasets there is standard split of validation set available so this option is not used in those cases.
+  # o.w. from the standard "train" pool this fraction of points are resereved as standard validation set.
+
+  num_classes: 2
+  # number of classes in the dataset.
+
+  test_set_size: 4000
+  # test set size, only used for debugging purposes.
+
+  random_state: 0
+  
+  # random seed for dataset creation.
+
+  decision_boundary: 'Linear'
+  # Only for synthetic datasets.
+
+
+
+# Specifying the configuration of model to use for auto-labeling process.
+model_conf:
+  lib: "sklearn"
+  # You can use pytorch or sklearn models. see `models/clf_factory.py`. 
+
+  model_name: "svm"
+  # name of the model to use. The choices available depend on the choice of `lib`.
+  # see `models/sklearn_clf.py` and `models/torch/pytorch_clf.py` for the options.
+
+  input_dimension: 30
+  # Need to be same as given in data_conf, (for synthetic datasets).
+
+  num_classes: 2
+  # same as in data_conf
+
+  fit_intercept: False
+  #For linear classifiers whether to have the bias term or not.
+  
+
+# The parameters for training model. Most of them are self explanatory.
+training_conf:
+  loss_tolerance: 1e-12
+  
+  max_epochs: 15000
+  normalize_weights: True
+
+  C: 2000
+  # regularization parameter for sklearn
+
+  probability: False
+
+  # parameters when torch models are used.
+  optimizer: "sgd"
+  learning_rate: 0.1
+  momentum: 0.9
+  batch_size: 64
+  weight_decay: 0.001
+  loss_tolerance: 1e-6
+  max_epochs: 75
+  normalize_weights: False
+  train_err_tol: -1
+  stopping_criterion: "max_epochs"
+  shuffle: True
+
+  ckpt_load_path: None  
+  ckpt_save_path: None #"../../ckpt/mnist_linear_passive_100.pth"
+  train_from_scratch: True
+  train_from_ckpt: False
+  ckpt_dir: "./"
+
+
+# inference device and batch size for model inference, it can be left empty.
+# It is set using other config parameters automatically.
+inference_conf:
+
+
+# This section deals with selecting points for human labeling, from the std. train (unlabeled) pool.
+train_pts_query_conf:
+  seed_train_size: 16
+  # seed_train_size are selected randomly and used for training the first round's model.
+
+  query_batch_size: 8
+  # For the subsequent rounds, query_batch_size are selected by applying the given query startegy.
+  # after selecting, they are human labeled and added to the training pool.
+
+  # which active querying strategy to use. see `core/query_strategies/query_startegies_factory.py` for options.
+  query_strategy_name: "margin_random_v2" 
+  margin_random_v2_constant: 2
+
+  # this option is used to set an upper limit on the number of training points algorithm can use.
+  # if the number of human labeled points for training model reaches this number, the algorithm stops.
+  max_num_train_pts: 2000
+
+
+# To find auto-labeling thresholds, we use validation data. 
+# These options specify the size of validation data and how to query it.
+val_pts_query_conf:
+  # currently only random querying is supported.
+  query_strategy_name: "random"
+  
+  # total number of validation samples to use.
+  max_num_val_pts : 2000
+  
+# config parameters for auto-labeling
+auto_lbl_conf:
+  
+  # two options "all" | "selective" . 
+  # "all" means auto-label all available unlabeled points using the current model.
+  # "selective" means find auto-labeling threshold using validation data and only auto-label
+  # points having confidence bigger than the threshold.
+  method_name: "selective"  #  
+
+  # which score to use. There were other options we experimented with but are outdated.
+  # use "confidence" only. This corresponds to the softmax or p(y|x).
+  score_type: "confidence"
+
+  # This option makes sense only when using "selective" in method_name. 
+  # options "joint" | "independent" 
+  # "joint" means determine single threshold for all classes.
+  # "independent" means find thresholds separately for each class.
+  class_wise: "independent" # 
+
+  # auto-labeling error tolerance. $\epsilon_a$.
+  auto_label_err_threshold: 0.01 # only for method_name: "selective"
+
+  # Use a ucb during estimating threshold. See `core/threshold_estimation.py` for details. 
+  C_1: 0.25
+  ucb: 'sigma'
+
+# stopping criterion, "max_num_train_pts" means stop when the number of training points queried reaches "train_pts_query_conf.max_num_train_pts"
+# other options are "label_all", in this it will keep running untill there are no unlabeled points left.
+stopping_criterion: "max_num_train_pts"
+
+# only enabled for smaller models like 2d linear models for visualzations.
+store_model_weights_in_mem: False
+

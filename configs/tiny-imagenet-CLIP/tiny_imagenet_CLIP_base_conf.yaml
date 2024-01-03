@@ -1,0 +1,75 @@
+
+device: "cuda:0"
+random_seed : 1
+
+data_conf: 
+  dataset: "tiny_imagenet_200_CLIP"
+  dimension: 512
+  random_state: 0
+  data_path: "../../data/tiny-imagenet/tiny-imagenet-200/"
+  #val_fraction: 0.3
+  num_classes: 200
+  flatten: False
+  emb_model: "openai/clip-vit-base-patch32"
+  compute_emb: False
+  emb_path: '../../data/tiny-imagenet/embeddings/'
+  
+model_conf:
+  model_name: "mlp"
+  input_dimension: 512
+  
+  lst_dims : 
+    - 2000
+    - 1000
+    - 500
+  num_classes: 200
+  fit_intercept: True
+  lib: "pytorch"
+
+training_conf: 
+  optimizer: "sgd"
+  learning_rate: 0.1
+  momentum: 0.9
+  batch_size: 64
+  weight_decay: 0.001
+  loss_tolerance: 1e-6
+  max_epochs: 75
+  normalize_weights: False
+  train_err_tol: -1
+  stopping_criterion: "max_epochs"
+  shuffle: True
+  #stopping_criterion: "val_err_threshold"
+  #val_err_threshold: 0.05
+
+  ckpt_load_path: None  
+  ckpt_save_path: None
+  train_from_scratch: True
+  train_from_ckpt: False
+  log_val_err: True 
+
+inference_conf:
+  device: "cuda:0"
+  shuffle: False
+  batch_size: 512
+
+train_pts_query_conf:
+  seed_train_size: 1000
+  query_batch_size: 500
+  query_strategy_name: "margin_random_v2" 
+  margin_random_v2_constant: 2
+  max_num_train_pts: 10000
+
+val_pts_query_conf:
+  query_strategy: "random"
+  max_num_val_pts : 10000
+
+auto_lbl_conf:
+  method_name: "selective"  # options "all" | "selective"
+  score_type: "confidence"  # options "confidence" | "margin" | "abs_logits"
+  class_wise: "independent" # options "joint" | "independent" #makes sense only when using selective 
+  auto_label_err_threshold: 0.05 # only for method_name: "selective"
+  C_1: 0.20
+  ucb: 'sigma'
+  
+stopping_criterion: "max_num_train_pts"
+store_model_weights_in_mem: False
